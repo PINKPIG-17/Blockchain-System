@@ -1,6 +1,7 @@
 package statemachine
 
 import (
+	"cxchain223/crypto/sha3"
 	"cxchain223/statdb"
 	"cxchain223/trie"
 	"cxchain223/types"
@@ -55,4 +56,47 @@ func (m StateMachine) Execute(state trie.ITrie, tx types.Transaction) {
 	data, err = rlp.EncodeToBytes(toAccount)
 
 	state.Store(to[:], data)
+}
+
+func (m StateMachine) Execute1(state statdb.StatDB, tx types.Transaction) *types.Receiption {
+	//TODO implement me
+	from := tx.From()
+	to := tx.To
+	value := tx.Value
+	gasUsed := tx.Gas
+	if tx.Gas < 21000 {
+		return nil
+	} else {
+		gasUsed = 21000
+	}
+	gasUsed = gasUsed * tx.GasPrice //total gas
+	cost := value + gasUsed
+	account := state.Load(from) //the sender account
+	if account == nil {
+		return nil
+	}
+	if account.Amount < gasUsed {
+		return nil
+	}
+	account.Amount -= cost
+	state.Store(from, *account)
+	_to := state.Load(to) //to_account
+	if _to == nil {
+		_to = &types.Account{} //new an to_account
+	}
+	_to.Amount += value // transfer
+	state.Store(to, *_to)
+	toSign, err := rlp.EncodeToBytes(tx) //encode
+	if err != nil {
+		return &types.Receiption{
+			Status: 0,
+		}
+	}
+	txHash := sha3.Keccak256(toSign) //sign
+	receipt := &types.Receiption{
+		TxHash:  &txHash,
+		Status:  1,
+		GasUsed: gasUsed,
+	}
+	return receipt
 }

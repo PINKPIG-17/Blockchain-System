@@ -11,10 +11,9 @@ import (
 )
 
 type Receiption struct {
-	TxHash hash.Hash
-	Status int
-	// GasUsed int
-	// Logs
+	TxHash  hash.Hash
+	Status  int
+	GasUsed uint64
 }
 
 type Transaction struct {
@@ -45,7 +44,7 @@ func (tx Transaction) From() Address {
 	pubKey, err := secp256k1.RecoverPubkey(msg[:], sig)
 	if err != nil {
 		// TODO 返回一个空地址
-		panic(err)
+		return [20]byte{}
 	}
 	return PubKeyToAddress(pubKey)
 }

@@ -3,7 +3,7 @@ package txpool
 import (
 	"cxchain223/statdb"
 	"cxchain223/types"
-	"hash"
+	"cxchain223/utils/hash"
 	"sort"
 )
 
@@ -13,6 +13,7 @@ type SortedTxs interface {
 	Replace(tx *types.Transaction)
 	Pop() *types.Transaction
 	Nonce() uint64
+	Length() int
 }
 
 type DefaultSortedTxs []*types.Transaction
@@ -20,6 +21,36 @@ type DefaultSortedTxs []*types.Transaction
 func (sorted DefaultSortedTxs) GasPrice() uint64 {
 	first := sorted[0]
 	return first.GasPrice
+}
+
+func (sorted DefaultSortedTxs) Nonce() uint64 {
+	last := sorted[len(sorted)-1]
+	return last.Nonce
+}
+
+func (sorted DefaultSortedTxs) Push(tx *types.Transaction) {
+	sorted = append(sorted, tx)
+}
+
+func (sorted DefaultSortedTxs) Pop() *types.Transaction {
+	pop := sorted[len(sorted)-1]
+	sorted = sorted[:len(sorted)-1]
+	return pop
+}
+
+func (sorted DefaultSortedTxs) Replace(tx *types.Transaction) {
+	from := tx.From()
+	for i := 0; i < len(sorted)-1; i++ {
+		if sorted[i].From() == from {
+			if sorted[i].Nonce == tx.Nonce {
+				sorted[i] = tx
+			}
+		}
+	}
+}
+
+func (sorted DefaultSortedTxs) Length() int {
+	return len(sorted)
 }
 
 type pendingTxs []SortedTxs
@@ -110,8 +141,18 @@ func (pool DefaultPool) pushPendingTx(blks []SortedTxs, tx *types.Transaction) {
 func (pool DefaultPool) addQueueTx(tx *types.Transaction) {
 	list := pool.queue[tx.From()]
 	list = append(list, tx)
-	// sort
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Nonce < list[j].Nonce
+	})
+	pool.queue[tx.From()] = list
+}
+func (pool *DefaultPool) Pop() *types.Transaction {
+	if (*pool).txs[0].Length() == 0 {
+		(*pool).txs = (*pool).txs[0:]
+	}
+	return (*pool).txs[0].Pop()
 }
 
-func (pool DefaultPool) Pop() *types.Transaction                {}
-func (pool DefaultPool) NotifyTxEvent(txs []*types.Transaction) {}
+func (pool DefaultPool) NotifyTxEvent(txs []*types.Transaction) {
+
+}

@@ -262,7 +262,3 @@ func prefixLength(s1, s2 string) int {
 	}
 	return length
 }
-
-// func (state *State) Execute(tx types.Transaction) {
-// 	// TODO
-// }

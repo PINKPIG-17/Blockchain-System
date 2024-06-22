@@ -7,6 +7,7 @@ import (
 	"cxchain223/txpool"
 	"cxchain223/types"
 	"cxchain223/utils/xtime"
+	"math/big"
 	"time"
 )
 
@@ -30,7 +31,7 @@ type BlockMaker struct {
 	interupt chan bool
 }
 
-func NewBlockMaker(txpool txpool.TxPool, state statdb.StatDB, exec statemachine.StateMachine) *BlockMaker {
+func NewBlockMaker(txpool txpool.TxPool, state statdb.StatDB, exec statemachine.IMachine) *BlockMaker {
 	return &BlockMaker{
 		txpool: txpool,
 		state:  state,
@@ -72,13 +73,24 @@ func (maker BlockMaker) Interupt() {
 func (maker BlockMaker) Finalize() (*blockchain.Header, *blockchain.Body) {
 	maker.nextHeader.Timestamp = xtime.Now()
 	maker.nextHeader.Nonce = 0
-	// TODO
-	// for n := 0; ; n++ {
-	// 	maker.nextHeader.Nonce = 0
-	// 	if maker.nextHeader.Hash() {
-	// 		break
-	// 	}
-	// }
+
+	for {
+		hash := maker.nextHeader.Hash()
+
+		if meetsDifficulty(hash, *new(big.Int).SetUint64(maker.config.Difficulty)) {
+			break
+		}
+		maker.nextHeader.Nonce++
+	}
 
 	return maker.nextHeader, maker.nextBody
 }
+
+// func meetsDifficulty(hash hash.Hash, difficulty uint64) bool {
+// 	for i := uint64(0); i < difficulty; i++ {
+// 		if hash[i/8]&(1<<(7-i%8)) != 0 {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }

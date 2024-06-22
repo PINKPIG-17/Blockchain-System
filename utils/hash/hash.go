@@ -174,3 +174,22 @@ func (h *UnprefixedHash) UnmarshalText(input []byte) error {
 func (h UnprefixedHash) MarshalText() ([]byte, error) {
 	return []byte(hex.EncodeToString(h[:])), nil
 }
+
+func (h *Hash) Size() int {
+	return h.Size()
+}
+
+func (h Hash) Sum(b []byte) []byte {
+	return h.Sum(b)
+}
+func (h *Hash) Reset() {
+	h.Reset()
+}
+
+func (h *Hash) BlockSize() int {
+	return h.BlockSize()
+}
+
+func (h *Hash) Write(p []byte) (n int, err error) {
+	return h.Write(p)
+}
