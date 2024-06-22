@@ -8,7 +8,6 @@ import (
 	"cxchain223/utils/hexutil"
 	"cxchain223/utils/rlp"
 	"errors"
-	"fmt"
 	"math/big"
 	"sort"
 	"strings"
@@ -116,25 +115,32 @@ func (state *State) SaveNode(node TrieNode) {
 	state.db.Put(h[:], node.Bytes())
 }
 
+func (state *State) SaveNodeByHash(node TrieNode, h hash.Hash) {
+	state.db.Put(h[:], node.Bytes())
+}
+
 func (state State) Load(key []byte) ([]byte, error) {
 	path := hexutil.Encode(key)
 	paths, hashes := state.FindAncestors(path)
-	fmt.Println(paths)
-	fmt.Println(hashes)
+	//fmt.Println(string(key), ":", paths, path, state.root.Path, state.root.Children)
 
 	matched := strings.Join(paths, "")
+	//fmt.Println("paths,matchad", paths, matched, strings.EqualFold(path, matched))
 	if strings.EqualFold(path, matched) {
 		lastHash := hashes[len(hashes)-1]
 		leafNode, err := state.LoadTrieNodeByHash(lastHash)
 		if err != nil {
-			return nil, err
+			return nil, errors.New("1")
 		}
 		if !leafNode.Leaf {
-			return nil, errors.New("not found")
+			return nil, errors.New("2 not found")
 		}
+		//fmt.Println("sssss", state.root.Path, "  ss", state.root.Children)
+		//fmt.Println(leafNode.Value)
 		return state.db.Get(leafNode.Value[:])
 	} else {
-		return nil, errors.New("not found")
+		//fmt.Println("root path", state.root.Path, state.root.Children)
+		return nil, errors.New("3 not found")
 	}
 }
 
@@ -151,7 +157,10 @@ func (state *State) Store(key, value []byte) error {
 	var childPath string
 	var childHash hash.Hash
 	var node *TrieNode
+	//fmt.Println("ptah,prefix", path, "asd", prefix, state.root.Children)
+
 	if strings.EqualFold(path, prefix) {
+		node = state.root
 		// 已经存在key，直接更新
 		leaf, _ := state.LoadTrieNodeByHash(hashes[depth-1])
 		leaf.Value = valueHash
@@ -164,6 +173,7 @@ func (state *State) Store(key, value []byte) error {
 		leafNode := NewTrieNode()
 		leafNode.Leaf = true
 		leafNode.Path = leafPath
+		//fmt.Println("leafpath", leafPath)
 		leafNode.Value = valueHash
 		state.SaveNode(*leafNode)
 		leafHash := leafNode.Hash()
@@ -171,6 +181,7 @@ func (state *State) Store(key, value []byte) error {
 		node, _ = state.LoadTrieNodeByHash(hashes[depth-1])
 		if strings.EqualFold(node.Path, paths[depth-1]) {
 			// 插入
+
 			node.Children = append(node.Children, NewChild(leafPath, leafHash))
 			sort.Sort(node.Children)
 			state.SaveNode(*node)
@@ -187,30 +198,32 @@ func (state *State) Store(key, value []byte) error {
 			newNode.Path = lastMatched
 			newNode.Children = make(Children, 0)
 			newNode.Children = append(newNode.Children, NewChild(leafNode.Path, leafNode.Hash()), NewChild(node.Path, node.Hash()))
-			sort.Sort(newNode.Children)
 
+			//fmt.Println(leafNode.Path, node.Path, lastMatched, newNode.Children, newNode.Path)
+
+			sort.Sort(newNode.Children)
 			childHash = newNode.Hash()
 			childPath = newNode.Path
+			node = newNode
+			state.SaveNode(*node)
+			//fmt.Println("a", node.Children, childPath, node.Hash(), state.root.Children)
 		}
 	}
-
 	for i := depth - 2; i >= 0; i-- {
 		node, _ = state.LoadTrieNodeByHash(hashes[i])
-		for _, child := range node.Children {
-			if strings.Index(child.Path, childPath) == 0 {
-				child.Path = childPath
-				child.Hash = childHash
+		for i := 0; i < len(node.Children); i++ {
+			if strings.Index(node.Children[i].Path, childPath) == 0 {
+				node.Children[i].Path = childPath
+				node.Children[i].Hash = childHash
 				break
 			}
 		}
-
 		state.SaveNode(*node)
 		childHash = node.Hash()
 		childPath = node.Path
 	}
-
 	state.root = node
-
+	//fmt.Println(node.Children)
 	return nil
 }
 
@@ -219,26 +232,26 @@ func (state State) FindAncestors(path string) ([]string, []hash.Hash) {
 	paths, hashes := make([]string, 0), make([]hash.Hash, 0)
 	paths = append(paths, "")
 	hashes = append(hashes, state.Root())
-	prefix := ""
+
+	prefix := state.root.Path
 	for {
 		flag := false
 
-		for _, child := range current.Children {
-			tmp := prefix + child.Path
+		for i := 0; i < len(current.Children); i++ {
+			tmp := prefix + current.Children[i].Path
 			length := prefixLength(path, tmp)
 			if length == len(tmp) {
-				prefix = prefix + child.Path
-				paths = append(paths, child.Path)
-				hashes = append(hashes, child.Hash)
+				prefix = prefix + current.Children[i].Path
+				paths = append(paths, current.Children[i].Path)
+				hashes = append(hashes, current.Children[i].Hash)
 				flag = true
-				data, _ := state.db.Get(child.Hash[:])
-				current, _ = NodeFromBytes(data)
+				current, _ = state.LoadTrieNodeByHash(current.Children[i].Hash)
 				break
 			} else if length > len(prefix) {
 				l := length - len(prefix)
-				str := child.Path[:l]
+				str := current.Children[i].Path[:l]
 				paths = append(paths, str)
-				hashes = append(hashes, child.Hash)
+				hashes = append(hashes, current.Children[i].Hash)
 				return paths, hashes
 			}
 		}
