@@ -18,5 +18,4 @@ func main() {
 	values, err := state.Load([]byte("apply"))
 	fmt.Println(string(values), err)
 	fmt.Println(string(value), err)
-
 }

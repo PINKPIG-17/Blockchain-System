@@ -146,11 +146,11 @@ func (pool DefaultPool) addQueueTx(tx *types.Transaction) {
 	})
 	pool.queue[tx.From()] = list
 }
-func (pool *DefaultPool) Pop() *types.Transaction {
-	if (*pool).txs[0].Length() == 0 {
-		(*pool).txs = (*pool).txs[0:]
+func (pool DefaultPool) Pop() *types.Transaction {
+	if pool.txs[0].Length() == 0 {
+		pool.txs = pool.txs[0:]
 	}
-	return (*pool).txs[0].Pop()
+	return pool.txs[0].Pop()
 }
 
 func (pool DefaultPool) NotifyTxEvent(txs []*types.Transaction) {
