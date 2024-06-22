@@ -150,7 +150,7 @@ func (pool DefaultPool) Pop() *types.Transaction {
 	if pool.txs[0].Length() == 0 {
 		pool.txs = pool.txs[1:]
 	}
-	return pool.txs[1].Pop()
+	return pool.txs[0].Pop()
 }
 
 func (pool DefaultPool) NotifyTxEvent(txs []*types.Transaction) {
