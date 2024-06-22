@@ -15,6 +15,8 @@ func main() {
 	state.Store([]byte("banana"), []byte("banana"))
 	state.Store([]byte("band"), []byte("band"))
 	value, err := state.Load([]byte("apple"))
+	values, err := state.Load([]byte("apply"))
+	fmt.Println(string(values), err)
 	fmt.Println(string(value), err)
 
 }
