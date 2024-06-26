@@ -4,6 +4,7 @@ import (
 	"cxchain223/statdb"
 	"cxchain223/types"
 	"cxchain223/utils/hash"
+	"fmt"
 	"sort"
 )
 
@@ -154,5 +155,8 @@ func (pool DefaultPool) Pop() *types.Transaction {
 }
 
 func (pool DefaultPool) NotifyTxEvent(txs []*types.Transaction) {
-
+	for _, tx := range txs {
+		pool.addQueueTx(tx)
+	}
+	fmt.Println("transaction added successfully")
 }
