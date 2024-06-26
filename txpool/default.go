@@ -158,5 +158,5 @@ func (pool DefaultPool) NotifyTxEvent(txs []*types.Transaction) {
 	for _, tx := range txs {
 		pool.addQueueTx(tx)
 	}
-	fmt.Println("transaction added successfully")
+	fmt.Println("transaction added to queue successfully")
 }

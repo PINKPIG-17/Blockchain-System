@@ -77,7 +77,6 @@ func (producer BlockProducer) Seal() (*blockchain.Header, *blockchain.Body) {
 
 	for {
 		hash := producer.header.Hash()
-
 		if meetsDifficulty(hash, producer.config.Difficulty) {
 			break
 		}
