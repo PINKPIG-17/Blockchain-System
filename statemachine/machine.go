@@ -94,7 +94,7 @@ func (m StateMachine) Execute1(state statdb.StatDB, tx types.Transaction) *types
 	}
 	txHash := sha3.Keccak256(toSign) //sign
 	receipt := &types.Receiption{
-		TxHash:  &txHash,
+		TxHash:  txHash,
 		Status:  1,
 		GasUsed: gasUsed,
 	}
