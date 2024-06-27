@@ -85,12 +85,3 @@ func (maker BlockMaker) Finalize() (*blockchain.Header, *blockchain.Body) {
 
 	return maker.nextHeader, maker.nextBody
 }
-
-// func meetsDifficulty(hash hash.Hash, difficulty uint64) bool {
-// 	for i := uint64(0); i < difficulty; i++ {
-// 		if hash[i/8]&(1<<(7-i%8)) != 0 {
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }

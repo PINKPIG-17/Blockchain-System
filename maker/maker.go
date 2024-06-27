@@ -31,14 +31,14 @@ type BlockProducer struct {
 	block  *blockchain.Body
 
 	interupt chan bool
+	running  bool
 }
 
-func (producer BlockProducer) NewBlock() {
+func (producer *BlockProducer) NewBlock() {
 	producer.header = blockchain.NewHeader(producer.chain.CurrentHeader)
-	producer.header.Coinbase = producer.config.Coinbase
+	producer.header.Coinbase = producer.config.Coinbase //set coinbase address
 	producer.block = blockchain.NewBlock()
-	producer.statdb.SetStatRoot(producer.header.Root)
-	// producer.statdb =
+	producer.statdb.SetStatRoot(producer.header.Root) //set root hash
 }
 
 func (producer BlockProducer) pack() {
