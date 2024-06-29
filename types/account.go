@@ -1,16 +1,17 @@
 package types
 
 import (
-	"goXChain/utils/rlp"
 	"goXChain/utils/hash"
+	"goXChain/utils/rlp"
 )
 
 type Account struct {
-	Amount uint64
-	Nonce uint64
+	Amount   uint64
+	Nonce    uint64
 	CodeHash hash.Hash
-	Root hash.Hash
+	Root     hash.Hash
 }
+
 func (account Account) Bytes() []byte {
 	data, _ := rlp.EncodeToBytes(account)
 	return data
