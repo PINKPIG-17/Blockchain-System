@@ -77,7 +77,7 @@ func (producer BlockProducer) Seal() (*blockchain.Header, *blockchain.Body) {
 
 	for {
 		hash := producer.header.Hash()
-		if meetsDifficulty(hash, producer.config.Difficulty) {
+		if meetsDifficulty(hash, producer.config.Difficulty.BitLen()) {
 			break
 		}
 		producer.header.Nonce++
@@ -86,10 +86,18 @@ func (producer BlockProducer) Seal() (*blockchain.Header, *blockchain.Body) {
 	return producer.header, producer.block
 }
 
-func meetsDifficulty(hash hash.Hash, difficulty big.Int) bool {
-	difficultyBytes := difficulty.Bytes()
-	for i := range difficultyBytes {
-		if hash[i] > difficultyBytes[i] {
+func meetsDifficulty(hash hash.Hash, difficultyBits int) bool {
+	difficultyBytes := (difficultyBits + 7) / 8
+	for i := 0; i < difficultyBytes-1; i++ {
+		if hash[i] != 0 {
+			return false
+		}
+	}
+	lastByte := hash[difficultyBytes-1]
+	remainderBits := difficultyBits % 8
+	if remainderBits > 0 {
+		mask := byte(0xFF << (8 - remainderBits))
+		if lastByte&mask != 0 {
 			return false
 		}
 	}

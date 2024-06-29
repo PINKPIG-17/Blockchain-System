@@ -1,11 +1,13 @@
 package types
 
 import (
+	"cxchain223/crypto"
 	"cxchain223/crypto/secp256k1"
 	"cxchain223/crypto/sha3"
 	"cxchain223/utils/hash"
 	"cxchain223/utils/hexutil"
 	"cxchain223/utils/rlp"
+	"errors"
 	"fmt"
 	"math/big"
 )
@@ -49,7 +51,7 @@ func (tx Transaction) From() Address {
 	return PubKeyToAddress(pubKey)
 }
 
-func (tx Transaction) GetPubKey() []byte {
+func (tx Transaction) VerifySignature() error {
 	txdata := tx.txdata
 	toSign, err := rlp.EncodeToBytes(txdata)
 	fmt.Println(hexutil.Encode(toSign), err)
@@ -57,17 +59,12 @@ func (tx Transaction) GetPubKey() []byte {
 	sig := make([]byte, 65)
 	pubKey, err := secp256k1.RecoverPubkey(msg[:], sig)
 	if err != nil {
-		return []byte{}
+		return errors.New("Invalid pubKey")
 	}
-	return pubKey
-}
-
-func (tx Transaction) GetTxDataHash() []byte {
-	txdata := tx.txdata
-	toSign, err := rlp.EncodeToBytes(txdata)
-	fmt.Println(hexutil.Encode(toSign), err)
-	msg := sha3.Keccak256(toSign)
-	return msg[:]
+	if !crypto.VerifySignature(pubKey, msg[:], tx.Bytes()) {
+		return errors.New("Invalid signature")
+	}
+	return nil
 }
 
 func (tx Transaction) Bytes() []byte { // turn tx.signature to sign of byte type

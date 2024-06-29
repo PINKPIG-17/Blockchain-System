@@ -1,7 +1,6 @@
 package txpool
 
 import (
-	"cxchain223/crypto"
 	"cxchain223/statdb"
 	"cxchain223/types"
 	"cxchain223/utils/hash"
@@ -83,7 +82,9 @@ func (pool DefaultPool) SetStatRoot(root hash.Hash) {
 }
 
 func (pool DefaultPool) NewTx(tx *types.Transaction) {
-	if !crypto.VerifySignature(tx.GetPubKey(), tx.GetTxDataHash(), tx.Bytes()) {
+	err := tx.VerifySignature()
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	account := pool.Stat.Load(tx.From())
